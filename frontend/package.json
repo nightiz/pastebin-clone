@@ -1,0 +1,22 @@
+{
+  "name": "pastebin-frontend",
+  "version": "1.0.0",
+  "description": "Local dev UI for Pastebin clone API",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "build:css": "tailwindcss -i ./src/input.css -o ./public/css/output.css",
+    "watch:css": "tailwindcss -i ./src/input.css -o ./public/css/output.css --watch",
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.3",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.0.0",
+    "tailwindcss": "^4.0.0"
+  }
+}

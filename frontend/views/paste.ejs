@@ -1,0 +1,182 @@
+<%- include('partials/header') %>
+
+<div class="space-y-6">
+  <!-- Creation / Token Banner -->
+  <% if (justCreated && editToken) { %>
+    <div class="rounded-2xl bg-indigo-950/60 border border-indigo-700/60 p-5 text-indigo-200 shadow-xl backdrop-blur-sm space-y-2">
+      <div class="flex items-center gap-2 text-indigo-300 font-semibold text-sm">
+        <svg class="w-5 h-5 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Paste Created Successfully!</span>
+      </div>
+      <p class="text-xs text-indigo-300/80">
+        Save this private <strong>edit token</strong> now. The server does not store it in plaintext and will never display it again. You need it if you want to delete this paste before it expires.
+      </p>
+      <div class="flex items-center gap-2 pt-1">
+        <input
+          type="text"
+          readonly
+          id="editTokenField"
+          value="<%= editToken %>"
+          class="bg-zinc-950/80 font-mono text-xs text-indigo-300 px-3 py-1.5 rounded-lg border border-indigo-800/80 w-full max-w-md select-all focus:outline-none"
+        >
+        <button
+          type="button"
+          onclick="copyToClipboard('<%= editToken %>', this)"
+          class="shrink-0 px-3 py-1.5 text-xs font-medium bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors cursor-pointer"
+        >
+          Copy Token
+        </button>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Burn Warning Banner -->
+  <% if (paste.burn_after_read) { %>
+    <div class="rounded-2xl bg-amber-950/60 border border-amber-700/60 p-5 text-amber-200 shadow-xl backdrop-blur-sm flex items-start gap-3">
+      <div class="text-2xl shrink-0">🔥</div>
+      <div class="space-y-1">
+        <h2 class="text-sm font-semibold text-amber-300">Burn After Read Paste</h2>
+        <p class="text-xs text-amber-300/80">
+          This paste was configured to burn after reading. It has now been deleted from the database. Once you leave this page, it will not be viewable again.
+        </p>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Paste View Card -->
+  <div class="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm">
+    <!-- Header / Meta Bar -->
+    <div class="p-6 border-b border-zinc-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <h1 class="text-lg font-bold text-white tracking-tight">
+            <%= paste.title || 'Untitled Paste' %>
+          </h1>
+          <span class="text-xs font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700/60">
+            <%= paste.id %>
+          </span>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 text-xs text-zinc-400 mt-2">
+          <% if (paste.language) { %>
+            <span class="px-2 py-0.5 rounded bg-indigo-950/60 text-indigo-400 border border-indigo-800/50 uppercase font-mono text-[10px] font-semibold">
+              <%= paste.language %>
+            </span>
+          <% } %>
+          <span>Created <%= new Date(paste.created_at).toLocaleString() %></span>
+          <span>•</span>
+          <span><%= paste.views %> <%= paste.views === 1 ? 'view' : 'views' %></span>
+          <% if (paste.expires_at) { %>
+            <span>•</span>
+            <span class="text-amber-400">Expires <%= new Date(paste.expires_at).toLocaleString() %></span>
+          <% } else { %>
+            <span>•</span>
+            <span class="text-zinc-500">Never expires</span>
+          <% } %>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          id="copyBtn"
+          onclick="copyPasteContent(this)"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700/60 transition-colors cursor-pointer"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+          </svg>
+          <span>Copy</span>
+        </button>
+
+        <a
+          href="/pastes/<%= paste.id %>/raw"
+          target="_blank"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700/60 transition-colors"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+          </svg>
+          <span>Raw</span>
+        </a>
+
+        <% if (!paste.burn_after_read) { %>
+          <button
+            type="button"
+            onclick="toggleDeleteModal()"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/60 transition-colors cursor-pointer"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span>Delete</span>
+          </button>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Code Display with Line Numbers -->
+    <div class="relative bg-zinc-950 overflow-x-auto">
+      <div class="flex text-xs sm:text-sm font-mono min-w-full">
+        <!-- Line Numbers -->
+        <% const lines = paste.content.split('\n'); %>
+        <div class="select-none py-4 px-3 text-right bg-zinc-950/80 text-zinc-600 border-r border-zinc-800/60 sticky left-0 z-10 leading-relaxed font-mono">
+          <% for (let i = 1; i <= lines.length; i++) { %>
+            <div><%= i %></div>
+          <% } %>
+        </div>
+
+        <!-- Code Content -->
+        <pre class="p-4 text-zinc-100 flex-1 leading-relaxed overflow-x-auto whitespace-pre font-mono tab-size-4"><code id="pasteCode"><%= paste.content %></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Modal Dialog -->
+  <div id="deleteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+    <div class="bg-zinc-900 border border-zinc-800 rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <h3 class="text-base font-bold text-white flex items-center gap-2">
+        <svg class="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+        </svg>
+        <span>Delete Paste</span>
+      </h3>
+      <p class="text-xs text-zinc-400">
+        Deleting this paste requires the <strong>edit token</strong> provided when the paste was created.
+      </p>
+      <form action="/pastes/<%= paste.id %>/delete" method="POST" class="space-y-4">
+        <div>
+          <label for="deleteTokenInput" class="block text-xs font-medium text-zinc-300 mb-1">Edit Token</label>
+          <input
+            type="text"
+            id="deleteTokenInput"
+            name="edit_token"
+            value="<%= editToken || '' %>"
+            required
+            placeholder="Paste your 64-char edit token"
+            class="w-full bg-zinc-950 font-mono border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-100 focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:border-rose-500"
+          >
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button
+            type="button"
+            onclick="toggleDeleteModal()"
+            class="px-3.5 py-2 rounded-lg text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-300 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="px-3.5 py-2 rounded-lg text-xs font-medium bg-rose-600 hover:bg-rose-500 text-white shadow-sm transition-colors cursor-pointer"
+          >
+            Confirm Delete
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/footer') %>

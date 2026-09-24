@@ -1,0 +1,147 @@
+<%- include('partials/header') %>
+
+<div class="space-y-6">
+  <% if (deleted) { %>
+    <div class="rounded-xl bg-emerald-950/50 border border-emerald-800/80 p-4 text-sm text-emerald-300 flex items-center gap-3">
+      <svg class="w-5 h-5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+      </svg>
+      <span>Paste was deleted successfully.</span>
+    </div>
+  <% } %>
+
+  <% if (error) { %>
+    <div class="rounded-xl bg-rose-950/50 border border-rose-800/80 p-4 text-sm text-rose-300 flex items-center gap-3">
+      <svg class="w-5 h-5 text-rose-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <span><%= error %></span>
+    </div>
+  <% } %>
+
+  <div class="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl shadow-xl overflow-hidden backdrop-blur-sm">
+    <div class="p-6 border-b border-zinc-800/80">
+      <h1 class="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+        <span>Create a New Paste</span>
+      </h1>
+      <p class="text-xs text-zinc-400 mt-1">Share code snippets, notes, or logs with optional expiration and burn-on-read.</p>
+    </div>
+
+    <form action="/pastes" method="POST" id="pasteForm" class="p-6 space-y-5">
+      <!-- Options Bar -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Title -->
+        <div>
+          <label for="title" class="block text-xs font-medium text-zinc-300 mb-1.5">Title (Optional)</label>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            value="<%= formData.title || '' %>"
+            placeholder="e.g. main.go, bug report, config"
+            class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3.5 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+          >
+        </div>
+
+        <!-- Language -->
+        <div>
+          <label for="language" class="block text-xs font-medium text-zinc-300 mb-1.5">Language / Syntax</label>
+          <select
+            id="language"
+            name="language"
+            class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3.5 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+          >
+            <% const currentLang = formData.language || 'plaintext'; %>
+            <option value="plaintext" <%= currentLang === 'plaintext' ? 'selected' : '' %>>Plain Text</option>
+            <option value="go" <%= currentLang === 'go' ? 'selected' : '' %>>Go</option>
+            <option value="javascript" <%= currentLang === 'javascript' ? 'selected' : '' %>>JavaScript</option>
+            <option value="typescript" <%= currentLang === 'typescript' ? 'selected' : '' %>>TypeScript</option>
+            <option value="python" <%= currentLang === 'python' ? 'selected' : '' %>>Python</option>
+            <option value="json" <%= currentLang === 'json' ? 'selected' : '' %>>JSON</option>
+            <option value="html" <%= currentLang === 'html' ? 'selected' : '' %>>HTML</option>
+            <option value="css" <%= currentLang === 'css' ? 'selected' : '' %>>CSS</option>
+            <option value="rust" <%= currentLang === 'rust' ? 'selected' : '' %>>Rust</option>
+            <option value="sql" <%= currentLang === 'sql' ? 'selected' : '' %>>SQL</option>
+            <option value="bash" <%= currentLang === 'bash' ? 'selected' : '' %>>Shell / Bash</option>
+            <option value="yaml" <%= currentLang === 'yaml' ? 'selected' : '' %>>YAML</option>
+            <option value="markdown" <%= currentLang === 'markdown' ? 'selected' : '' %>>Markdown</option>
+          </select>
+        </div>
+
+        <!-- Expiration -->
+        <div>
+          <label for="expires_in_seconds" class="block text-xs font-medium text-zinc-300 mb-1.5">Expiration</label>
+          <select
+            id="expires_in_seconds"
+            name="expires_in_seconds"
+            class="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3.5 py-2 text-sm text-zinc-100 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+          >
+            <% const exp = formData.expires_in_seconds || '0'; %>
+            <option value="0" <%= exp === '0' ? 'selected' : '' %>>Never</option>
+            <option value="600" <%= exp === '600' ? 'selected' : '' %>>10 Minutes</option>
+            <option value="3600" <%= exp === '3600' ? 'selected' : '' %>>1 Hour</option>
+            <option value="86400" <%= exp === '86400' ? 'selected' : '' %>>1 Day</option>
+            <option value="604800" <%= exp === '604800' ? 'selected' : '' %>>1 Week</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Burn After Read Switch -->
+      <div class="flex items-center gap-3 pt-1">
+        <label class="relative inline-flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            name="burn_after_read"
+            id="burn_after_read"
+            value="true"
+            <%= (formData.burn_after_read === 'true' || formData.burn_after_read === 'on' || formData.burn_after_read === true) ? 'checked' : '' %>
+            class="sr-only peer"
+          >
+          <div class="w-10 h-6 bg-zinc-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-600"></div>
+        </label>
+        <div>
+          <label for="burn_after_read" class="text-sm font-medium text-zinc-200 cursor-pointer flex items-center gap-1.5">
+            <span>🔥 Burn after read</span>
+          </label>
+          <p class="text-xs text-zinc-400">Permanently deletes this paste immediately after its first view.</p>
+        </div>
+      </div>
+
+      <!-- Content Area -->
+      <div class="relative">
+        <div class="flex items-center justify-between text-xs text-zinc-400 mb-1.5">
+          <label for="content" class="font-medium text-zinc-300">Paste Content</label>
+          <div class="flex items-center gap-3">
+            <span id="lineCount">0 lines</span>
+            <span>•</span>
+            <span id="charCount">0 characters</span>
+          </div>
+        </div>
+        <textarea
+          id="content"
+          name="content"
+          rows="18"
+          required
+          placeholder="Paste code or text here..."
+          class="w-full bg-zinc-950 font-mono text-xs sm:text-sm text-zinc-100 border border-zinc-800 rounded-xl p-4 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all resize-y leading-relaxed"
+        ><%= formData.content || '' %></textarea>
+      </div>
+
+      <!-- Footer Buttons -->
+      <div class="flex items-center justify-between pt-2">
+        <span class="text-xs text-zinc-500 hidden sm:inline">Press <kbd class="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700 font-mono text-[10px]">Ctrl+Enter</kbd> to submit</span>
+        <button
+          type="submit"
+          class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium text-sm bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-600/20 hover:shadow-indigo-600/30 transition-all cursor-pointer"
+        >
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+          </svg>
+          Create Paste
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<%- include('partials/footer') %>
