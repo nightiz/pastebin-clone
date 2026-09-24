@@ -4,8 +4,6 @@
 
 # Backend
 backend/data/
-backend/server
-backend/server.exe
 *.db
 *.db-journal
 *.db-wal
